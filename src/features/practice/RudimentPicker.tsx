@@ -42,7 +42,6 @@ export default function RudimentPicker({
           <Text style={[styles.itemName, selected && styles.itemNameSelected]} numberOfLines={1}>
             {item.name}
           </Text>
-          {item.isOriginal26 && <Text style={styles.badge}>26</Text>}
           <Text style={styles.meter}>
             {`${item.timeSignature.numerator}/${item.timeSignature.denominator}`}
           </Text>
@@ -55,7 +54,7 @@ export default function RudimentPicker({
     <Modal visible={visible} animationType="slide" presentationStyle="pageSheet" onRequestClose={onClose}>
       <View style={styles.container}>
         <View style={styles.header}>
-          <Text style={styles.title}>PAS 40 Rudiments</Text>
+          <Text style={styles.title}>Menu</Text>
           <TouchableOpacity onPress={onClose} hitSlop={12}>
             <Ionicons name="close" size={26} color="#d0d0d0" />
           </TouchableOpacity>
@@ -68,9 +67,6 @@ export default function RudimentPicker({
             <Text style={styles.sectionHeader}>{section.title}</Text>
           )}
           stickySectionHeadersEnabled
-          ListFooterComponent={(
-            <Text style={styles.legend}>26 = the original 26 Standard American Drum Rudiments</Text>
-          )}
           contentContainerStyle={{ paddingBottom: insets.bottom + 24 }}
         />
       </View>
@@ -139,26 +135,10 @@ const styles = StyleSheet.create({
     color: '#ffffff',
     fontWeight: '700',
   },
-  badge: {
-    color: '#c9a227',
-    fontSize: 11,
-    fontWeight: '700',
-    borderWidth: 1,
-    borderColor: '#c9a227',
-    borderRadius: 4,
-    paddingHorizontal: 4,
-    overflow: 'hidden',
-  },
   meter: {
     width: 30,
     color: '#888888',
     fontSize: 13,
     textAlign: 'right',
-  },
-  legend: {
-    color: '#666666',
-    fontSize: 11,
-    textAlign: 'center',
-    paddingVertical: 10,
   },
 });

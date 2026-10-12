@@ -185,7 +185,7 @@ export default function PracticeScreen({ initialSettings, onSettingsChange }: Pr
         <View style={styles.volumes}>
           <VolumeControl
             icon={<FontAwesome5 name="drum" size={20} color={snareVolume > 0 ? ACTIVE : INACTIVE} />}
-            label="Demo"
+            label="Snare"
             value={snareVolume}
             onChange={setSnareVolume}
             onChangeEnd={(volume) => onSettingsChange({ snareVolume: volume })}
