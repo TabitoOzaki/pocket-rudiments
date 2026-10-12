@@ -17,7 +17,7 @@ export interface ScheduledHit {
 }
 
 export const VELOCITY = {
-  accent: 118,
+  accent: 90,
   tap: 74,
   rollLead: 80,
   rollRebound: 66,
