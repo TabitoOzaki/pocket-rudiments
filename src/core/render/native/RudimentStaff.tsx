@@ -1,5 +1,5 @@
 import { useMemo } from 'react';
-import { ScrollView, View } from 'react-native';
+import { View } from 'react-native';
 import Svg, { G, Rect } from 'react-native-svg';
 import type { Rudiment } from '@/types/rudiment';
 import { layoutMeasure, minMeasureWidth } from '@/core/render/layout';
@@ -41,8 +41,9 @@ export default function RudimentStaff({
     ...rudiment.measures.map((measure) => minMeasureWidth(measure, measureTicks) + chromeW),
   );
   const perRow = Math.max(1, Math.min(measureCount, Math.floor(width / minMeasureW)));
-  // 1 小節でも収まらないときは譜面を横にスクロールさせる
+  // 1 小節でも収まらないときは、必要な幅で描いてから画面幅に縮小する（横スクロールさせない）
   const staffW = Math.max(width, perRow * minMeasureW);
+  const scale = width / staffW;
   const measureW = staffW / perRow;
 
   const placed = useMemo(() => rudiment.measures.map((measure, index) => {
@@ -77,10 +78,10 @@ export default function RudimentStaff({
     }
   }
 
-  const rows = (
+  return (
     <View>
       {Array.from({ length: rowCount }, (_, row) => (
-        <Svg key={row} width={staffW} height={ROW_H}>
+        <Svg key={row} width={width} height={ROW_H * scale} viewBox={`0 0 ${staffW} ${ROW_H}`}>
           <G y={TOP_PAD}>
             {highlight && highlight.row === row && (
               <Rect
@@ -109,12 +110,5 @@ export default function RudimentStaff({
         </Svg>
       ))}
     </View>
-  );
-
-  if (staffW <= width) return rows;
-  return (
-    <ScrollView horizontal showsHorizontalScrollIndicator={false}>
-      {rows}
-    </ScrollView>
   );
 }
