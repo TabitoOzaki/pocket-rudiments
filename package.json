@@ -10,7 +10,8 @@
     "lint:fix": "eslint . --ext .js,.ts,.tsx --fix",
     "typecheck": "tsc --noEmit",
     "test": "jest",
-    "prepare": "husky"
+    "prepare": "husky",
+    "android": "expo run:android"
   },
   "dependencies": {
     "@expo/vector-icons": "^15.0.3",
