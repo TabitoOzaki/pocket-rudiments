@@ -17,7 +17,6 @@
     "ios": {
       "supportsTablet": true,
       "bundleIdentifier": "com.tabitodev.pocketrudiments",
-      "buildNumber": "1",
       "infoPlist": {
         "ITSAppUsesNonExemptEncryption": false
       }
