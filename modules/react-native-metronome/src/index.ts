@@ -1,10 +1,14 @@
 import { requireNativeModule } from 'expo-modules-core';
 
-/** ループ再生するスネアの 1 打。beat は拍位置、sec はそこからの秒ずれ（負なら前打ち） */
+/**
+ * ループ再生するスネアの 1 打。beat は拍位置、sec はそこからの秒ずれ（負なら前打ち）。
+ * pan は -1（左）〜 1（右）で、省略すると中央。
+ */
 export interface SnareHit {
   beat: number;
   sec: number;
   velocity: number;
+  pan?: number;
 }
 
 interface MetronomeModuleInterface {

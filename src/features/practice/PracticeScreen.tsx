@@ -10,7 +10,7 @@ import MetronomeModule from 'react-native-metronome';
 import type { Hand } from '@/types/rudiment';
 import { CATEGORY_LABELS, RUDIMENTS } from '@/core/rudiments/catalog';
 import { swapHands } from '@/core/rudiments/hands';
-import { buildSnareLoop, loopBeatsOf } from '@/core/rudiments/schedule';
+import { HAND_PAN, buildSnareLoop, loopBeatsOf } from '@/core/rudiments/schedule';
 import RudimentStaff from '@/core/render/native/RudimentStaff';
 import { HAND_COLORS } from '@/core/render/native/shared';
 import BpmControl from '@/components/BpmControl';
@@ -55,7 +55,11 @@ export default function PracticeScreen({ initialSettings, onSettingsChange }: Pr
   useEffect(() => {
     const hits = snareEnabled ? buildSnareLoop(rudiment, bpm) : [];
     MetronomeModule.setSnareLoop(
-      hits.map(({ beat, sec, velocity }) => ({ beat, sec, velocity })),
+      hits.map(({
+        beat, sec, velocity, hand,
+      }) => ({
+        beat, sec, velocity, pan: HAND_PAN[hand],
+      })),
       loopBeats,
     );
   }, [rudiment, bpm, snareEnabled, loopBeats]);

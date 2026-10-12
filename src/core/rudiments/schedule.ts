@@ -25,6 +25,12 @@ export const VELOCITY = {
   buzz: 52,
 };
 
+/** 見本演奏の定位。右手は少し右、左手は少し左から聞こえるようにする（-1 = 左端、1 = 右端） */
+export const HAND_PAN: Record<Hand, number> = {
+  R: 0.35,
+  L: -0.35,
+};
+
 /** フラムの装飾音を主音より前に打つ秒数 */
 const FLAM_GAP_SEC = 0.03;
 

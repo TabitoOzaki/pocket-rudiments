@@ -5,9 +5,12 @@ public class MetronomeModule: Module {
   private var audioEngine = AVAudioEngine()
   private var playerNode = AVAudioPlayerNode()
   private var speechPlayerNode = AVAudioPlayerNode()
-  private let drumSampler = AVAudioUnitSampler()
+  // 左右の手で定位を変えるため、スネアは手ごとに別のサンプラーで鳴らす（ノードの pan はそのノードの音すべてに効く）
+  private let rightSampler = AVAudioUnitSampler()
+  private let leftSampler = AVAudioUnitSampler()
   // ループ再生するスネアの打点。beat は小節頭からの拍位置、sec は拍位置からの秒ずれ（装飾音の前打ちなど）
-  private var snareNotes: [(beat: Double, sec: Double, velocity: UInt8)] = []
+  // pan は -1（左）〜 1（右）。負なら左手用、それ以外は右手用のサンプラーで鳴らす
+  private var snareNotes: [(beat: Double, sec: Double, velocity: UInt8, pan: Float)] = []
   private var snareLoopBeats: Double = 0
   private var clickEnabled = true
   private var timer: DispatchSourceTimer?
@@ -58,7 +61,8 @@ public class MetronomeModule: Module {
       self?.snareNotes = notes.map { note in
         (beat: note["beat"] ?? 0,
          sec: note["sec"] ?? 0,
-         velocity: UInt8(clamping: Int(note["velocity"] ?? 100)))
+         velocity: UInt8(clamping: Int(note["velocity"] ?? 100)),
+         pan: Float(min(max(note["pan"] ?? 0, -1), 1)))
       }
       self?.snareLoopBeats = loopBeats.isFinite ? max(0, loopBeats) : 0
     }
@@ -140,10 +144,12 @@ public class MetronomeModule: Module {
   }
 
   private func applySoundFont(url: URL) {
-    do {
-      try drumSampler.loadSoundBankInstrument(at: url, program: drumProgram, bankMSB: 0x78, bankLSB: 0)
-    } catch {
-      try? drumSampler.loadSoundBankInstrument(at: url, program: drumProgram, bankMSB: 0x00, bankLSB: 0)
+    for sampler in [rightSampler, leftSampler] {
+      do {
+        try sampler.loadSoundBankInstrument(at: url, program: drumProgram, bankMSB: 0x78, bankLSB: 0)
+      } catch {
+        try? sampler.loadSoundBankInstrument(at: url, program: drumProgram, bankMSB: 0x00, bankLSB: 0)
+      }
     }
   }
 
@@ -188,11 +194,13 @@ public class MetronomeModule: Module {
     speechPlayerNode = AVAudioPlayerNode()
     audioEngine.attach(playerNode)
     audioEngine.attach(speechPlayerNode)
-    audioEngine.attach(drumSampler)
+    audioEngine.attach(rightSampler)
+    audioEngine.attach(leftSampler)
     let fmt = AVAudioFormat(standardFormatWithSampleRate: 44100, channels: 1)!
     audioEngine.connect(playerNode, to: audioEngine.mainMixerNode, format: fmt)
     audioEngine.connect(speechPlayerNode, to: audioEngine.mainMixerNode, format: speechFormat)
-    audioEngine.connect(drumSampler, to: audioEngine.mainMixerNode, format: nil)
+    audioEngine.connect(rightSampler, to: audioEngine.mainMixerNode, format: nil)
+    audioEngine.connect(leftSampler, to: audioEngine.mainMixerNode, format: nil)
     try? audioEngine.start()
     playerNode.play()
     speechPlayerNode.play()
@@ -256,13 +264,15 @@ public class MetronomeModule: Module {
       guard absolute >= windowStart && absolute < windowEnd else { continue }
       let noteOffset = (absolute - windowStart) * secPerBeat
       let velocity = note.velocity
+      let sampler = note.pan < 0 ? leftSampler : rightSampler
+      if sampler.pan != note.pan { sampler.pan = note.pan }
       if noteOffset < 0.002 {
-        drumSampler.startNote(38, withVelocity: velocity, onChannel: 9)
+        sampler.startNote(38, withVelocity: velocity, onChannel: 9)
       } else {
         let delayUs = DispatchTimeInterval.microseconds(Int(noteOffset * 1_000_000))
         DispatchQueue.global(qos: .userInteractive).asyncAfter(deadline: .now() + delayUs) { [weak self] in
           guard let self = self, self.isPlaying else { return }
-          self.drumSampler.startNote(38, withVelocity: velocity, onChannel: 9)
+          sampler.startNote(38, withVelocity: velocity, onChannel: 9)
         }
       }
     }
