@@ -163,7 +163,7 @@ export default function PracticeScreen({ initialSettings, onSettingsChange }: Pr
         </View>
 
         <View style={styles.leadRow}>
-          <Text style={styles.leadLabel}>Lead hand</Text>
+          <Text style={styles.sectionLabel}>Lead hand</Text>
           <View style={styles.segment}>
             {(['R', 'L'] as Hand[]).map((hand) => (
               <TouchableOpacity
@@ -183,6 +183,7 @@ export default function PracticeScreen({ initialSettings, onSettingsChange }: Pr
         </View>
 
         <View style={styles.volumes}>
+          <Text style={styles.sectionLabel}>Volume</Text>
           <VolumeControl
             icon={<FontAwesome5 name="drum" size={20} color={snareVolume > 0 ? ACTIVE : INACTIVE} />}
             label="Snare"
@@ -263,6 +264,7 @@ const styles = StyleSheet.create({
     marginTop: 2,
   },
   paper: {
+    marginTop: 16,
     backgroundColor: '#ffffff',
     borderRadius: 10,
     padding: PAPER_PAD,
@@ -282,11 +284,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'space-between',
     marginTop: 14,
-  },
-  leadLabel: {
-    color: '#d0d0d0',
-    fontSize: 15,
-    fontWeight: '600',
   },
   segment: {
     flexDirection: 'row',
@@ -309,11 +306,19 @@ const styles = StyleSheet.create({
   },
   transport: {
     marginTop: 'auto',
-    paddingTop: 18,
+    paddingTop: 28,
     alignItems: 'center',
   },
   volumes: {
-    marginTop: 12,
+    marginTop: 18,
+  },
+  sectionLabel: {
+    color: '#888888',
+    fontSize: 12,
+    fontWeight: '700',
+    letterSpacing: 1,
+    textTransform: 'uppercase',
+    marginBottom: 2,
   },
   playBtn: {
     marginTop: 10,
