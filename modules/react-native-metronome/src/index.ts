@@ -11,9 +11,18 @@ export interface SnareHit {
   pan?: number;
 }
 
+/** 拍ごとに届くイベント。beat は再生開始からの通し番号（1 始まり、カウントインを含む） */
+export interface BeatEvent {
+  /** startWithCountIn が返した番号。前の再生の拍を見分けるのに使う */
+  session: number;
+  beat: number;
+  /** この再生のカウントインの拍数（カウントインなしなら 0） */
+  countInBeats: number;
+}
+
 interface MetronomeModuleInterface {
   start(bpm: number): void;
-  startWithCountIn(bpm: number): void;
+  startWithCountIn(bpm: number): number;
   stop(): void;
   setBpm(bpm: number): void;
   preWarmSpeech(): void;
@@ -23,7 +32,7 @@ interface MetronomeModuleInterface {
   setSnareVolume(volume: number): void;
   setDrumKit(program: number): void;
   setBeatsPerMeasure(n: number): void;
-  addListener(eventName: string, listener: () => void): { remove: () => void };
+  addListener(eventName: string, listener: (event: BeatEvent) => void): { remove: () => void };
 }
 
 let cachedModule: MetronomeModuleInterface | null = null;
@@ -37,7 +46,8 @@ function getModule(): MetronomeModuleInterface {
 
 const MetronomeModule = {
   start(bpm: number) { getModule().start(bpm); },
-  startWithCountIn(bpm: number) { getModule().startWithCountIn(bpm); },
+  /** カウントイン付きで頭から鳴らし、この再生のセッション番号を返す */
+  startWithCountIn(bpm: number): number { return getModule().startWithCountIn(bpm); },
   stop() { getModule().stop(); },
   setBpm(bpm: number) { getModule().setBpm(bpm); },
   preWarmSpeech() { getModule().preWarmSpeech(); },
@@ -51,7 +61,7 @@ const MetronomeModule = {
   setSnareVolume(volume: number) { getModule().setSnareVolume(volume); },
   setDrumKit(program: number) { getModule().setDrumKit(program); },
   setBeatsPerMeasure(n: number) { getModule().setBeatsPerMeasure(n); },
-  addBeatListener(listener: () => void) {
+  addBeatListener(listener: (event: BeatEvent) => void) {
     return getModule().addListener('onBeat', listener);
   },
 };

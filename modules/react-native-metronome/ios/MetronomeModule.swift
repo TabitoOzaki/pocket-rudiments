@@ -16,6 +16,10 @@ public class MetronomeModule: Module {
   private var clickVolume: Float = 1
   private var snareVolume: Float = 1
   private var timer: DispatchSourceTimer?
+  // タイマーの処理と開始・停止を同じ直列キューで行い、停止直後に古いタイマーが拍を進めないようにする
+  private let timerQueue = DispatchQueue(label: "react-native-metronome.timer", qos: .userInteractive)
+  // 再生を始めるたびに増やす。onBeat に載せて、JS 側が前の再生の拍を捨てられるようにする
+  private var session: Int = 0
   private var bpm: Double = 120
   private var isPlaying = false
 
@@ -43,8 +47,8 @@ public class MetronomeModule: Module {
     Function("start") { [weak self] (bpm: Double) in
       self?.startMetronome(bpm: bpm, countIn: false)
     }
-    Function("startWithCountIn") { [weak self] (bpm: Double) in
-      self?.startMetronome(bpm: bpm, countIn: true)
+    Function("startWithCountIn") { [weak self] (bpm: Double) -> Int in
+      self?.startMetronome(bpm: bpm, countIn: true) ?? 0
     }
     Function("stop") { [weak self] in
       self?.stopMetronome()
@@ -167,20 +171,30 @@ public class MetronomeModule: Module {
     return .microseconds(Int(15_000_000 / safeBpm))
   }
 
-  private func startMetronome(bpm: Double, countIn: Bool) {
+  /** 再生を始め、その再生のセッション番号を返す */
+  @discardableResult
+  private func startMetronome(bpm: Double, countIn: Bool) -> Int {
     stopMetronome()
-    self.bpm = bpm; beatCounter = 0; subdivCount = 0
-    countInActive = countIn; isPlaying = true
+    let current: Int = timerQueue.sync {
+      session += 1
+      self.bpm = bpm; beatCounter = 0; subdivCount = 0
+      countInActive = countIn; isPlaying = true
+      return session
+    }
     do {
       let s = AVAudioSession.sharedInstance()
       try s.setCategory(.playback, mode: .default); try s.setActive(true)
-    } catch { return }
+    } catch { return current }
     setupAudioEngine()
     let subInterval = subdivInterval(forBpm: bpm)
-    let t = DispatchSource.makeTimerSource(queue: DispatchQueue.global(qos: .userInteractive))
+    let t = DispatchSource.makeTimerSource(queue: timerQueue)
     t.schedule(deadline: .now(), repeating: subInterval, leeway: .microseconds(100))
-    t.setEventHandler { [weak self] in self?.playSubdiv() }
+    t.setEventHandler { [weak self] in
+      guard let self = self, self.isPlaying, self.session == current else { return }
+      self.playSubdiv()
+    }
     t.resume(); timer = t
+    return current
   }
 
   private func updateBpm(bpm: Double) {
@@ -191,9 +205,11 @@ public class MetronomeModule: Module {
   }
 
   private func stopMetronome() {
-    timer?.cancel(); timer = nil
+    timerQueue.sync {
+      timer?.cancel(); timer = nil
+      isPlaying = false
+    }
     if audioEngine.isRunning { audioEngine.stop() }
-    isPlaying = false
   }
 
   private func setupAudioEngine() {
@@ -222,7 +238,12 @@ public class MetronomeModule: Module {
     let isBeat = (subdivCount - 1) % 4 == 0
     if isBeat {
       beatCounter += 1
-      sendEvent("onBeat")
+      // beat は再生開始からの通し番号（1 始まり）。カウントインの拍も含む
+      sendEvent("onBeat", [
+        "session": session,
+        "beat": beatCounter,
+        "countInBeats": countInActive ? beatsPerMeasure * 2 : 0,
+      ])
       // カウントインも本編もbeatsPerMeasure拍ごとの1拍目（beatCounter ≡ 1 mod beatsPerMeasure）を常にアクセント
       let isDownbeat = (beatCounter - 1) % beatsPerMeasure == 0
       // カウントイン中はクリックの音量を絞っていても聞こえるようにする（入りの合図が無くなるため）

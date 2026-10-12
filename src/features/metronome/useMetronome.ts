@@ -16,6 +16,8 @@ const toGain = (volume: number) => volume * volume;
 export interface UseMetronomeResult {
   bpm: number;
   playing: boolean;
+  /** 直近の再生のセッション番号（onBeat の session と突き合わせる） */
+  session: number;
   /** スライダーの値（0〜1） */
   clickVolume: number;
   snareVolume: number;
@@ -35,6 +37,7 @@ export function useMetronome(
 ): UseMetronomeResult {
   const [bpm, setBpmState] = useState(initialBpm);
   const [playing, setPlaying] = useState(false);
+  const [session, setSession] = useState(0);
   const [clickVolume, setClickVolumeState] = useState(initialClickVolume);
   const [snareVolume, setSnareVolumeState] = useState(initialSnareVolume);
   const bpmRef = useRef(initialBpm);
@@ -55,7 +58,7 @@ export function useMetronome(
 
   const start = useCallback(() => {
     MetronomeModule.stop();
-    MetronomeModule.startWithCountIn(bpmRef.current);
+    setSession(MetronomeModule.startWithCountIn(bpmRef.current));
     playingRef.current = true;
     setPlaying(true);
   }, []);
@@ -101,6 +104,7 @@ export function useMetronome(
   return {
     bpm,
     playing,
+    session,
     clickVolume,
     snareVolume,
     start,

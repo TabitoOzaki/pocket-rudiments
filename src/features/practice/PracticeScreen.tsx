@@ -46,6 +46,7 @@ export default function PracticeScreen({ initialSettings, onSettingsChange }: Pr
   const {
     bpm,
     playing,
+    session,
     clickVolume,
     snareVolume,
     start,
@@ -61,7 +62,7 @@ export default function PracticeScreen({ initialSettings, onSettingsChange }: Pr
     [baseRudiment, lead],
   );
   const loopBeats = loopBeatsOf(rudiment);
-  const beats = useBeatTracking(playing, rudiment.beatsPerMeasure, loopBeats);
+  const beats = useBeatTracking(playing, session, loopBeats);
 
   // 見本演奏のパターン（BPM で装飾音の間隔が変わるので BPM ごとに作り直す）
   useEffect(() => {
@@ -79,14 +80,10 @@ export default function PracticeScreen({ initialSettings, onSettingsChange }: Pr
   // ルーディメンツを変えたら拍子を合わせ、再生中ならカウントインからやり直す
   const playingRef = useRef(playing);
   playingRef.current = playing;
-  const { reset } = beats;
   useEffect(() => {
     MetronomeModule.setBeatsPerMeasure(baseRudiment.beatsPerMeasure);
-    if (playingRef.current) {
-      reset();
-      start();
-    }
-  }, [baseRudiment, reset, start]);
+    if (playingRef.current) start();
+  }, [baseRudiment, start]);
 
   // BPM はスライダー操作中に何度も変わるので、落ち着いてから保存する
   useEffect(() => {
@@ -98,10 +95,9 @@ export default function PracticeScreen({ initialSettings, onSettingsChange }: Pr
     if (playing) {
       stop();
     } else {
-      reset();
       start();
     }
-  }, [playing, reset, start, stop]);
+  }, [playing, start, stop]);
 
   const selectRudiment = useCallback((id: number) => {
     setRudimentId(id);
