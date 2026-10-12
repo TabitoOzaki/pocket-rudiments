@@ -1,0 +1,41 @@
+{
+  "expo": {
+    "name": "Pocket Rudiments",
+    "slug": "pocket-rudiments",
+    "version": "1.0.0",
+    "orientation": "default",
+    "icon": "./assets/icon_v2.png",
+    "userInterfaceStyle": "dark",
+    "splash": {
+      "image": "./assets/splash.png",
+      "resizeMode": "cover",
+      "backgroundColor": "#0266d6"
+    },
+    "assetBundlePatterns": [
+      "**/*"
+    ],
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "com.tabitodev.pocketrudiments",
+      "buildNumber": "1",
+      "infoPlist": {
+        "ITSAppUsesNonExemptEncryption": false
+      }
+    },
+    "android": {
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/adaptive-icon.png",
+        "backgroundImage": "./assets/adaptive-icon-bg.png"
+      },
+      "package": "com.tabitodev.pocketrudiments"
+    },
+    "web": {
+      "favicon": "./assets/favicon.png"
+    },
+    "plugins": [
+      "expo-font",
+      "expo-asset"
+    ],
+    "owner": "tabitodev"
+  }
+}

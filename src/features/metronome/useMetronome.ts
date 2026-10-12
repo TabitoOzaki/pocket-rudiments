@@ -1,0 +1,87 @@
+import {
+  useCallback, useState, useRef, useEffect,
+} from 'react';
+import { AppState } from 'react-native';
+import MetronomeModule from 'react-native-metronome';
+
+export const MIN_BPM = 30;
+export const MAX_BPM = 300;
+
+/** Sight Pocket と同じ SF2 のキット番号（Jazz） */
+export const DRUM_KIT_PROGRAM = 32;
+
+export interface UseMetronomeResult {
+  bpm: number;
+  playing: boolean;
+  clickEnabled: boolean;
+  /** カウントイン（1 小節のクリック + 1 小節の発声）付きで頭から鳴らす */
+  start: () => void;
+  stop: () => void;
+  toggle: () => void;
+  changeBpm: (val: number) => void;
+  setClickEnabled: (enabled: boolean) => void;
+}
+
+export function useMetronome(initialBpm: number, initialClickEnabled: boolean): UseMetronomeResult {
+  const [bpm, setBpmState] = useState(initialBpm);
+  const [playing, setPlaying] = useState(false);
+  const [clickEnabled, setClickEnabledState] = useState(initialClickEnabled);
+  const bpmRef = useRef(initialBpm);
+  const playingRef = useRef(false);
+
+  useEffect(() => {
+    MetronomeModule.setClickEnabled(initialClickEnabled);
+    // 初期値だけを反映する
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  const stop = useCallback(() => {
+    MetronomeModule.stop();
+    playingRef.current = false;
+    setPlaying(false);
+  }, []);
+
+  const start = useCallback(() => {
+    MetronomeModule.stop();
+    MetronomeModule.startWithCountIn(bpmRef.current);
+    playingRef.current = true;
+    setPlaying(true);
+  }, []);
+
+  const toggle = useCallback(() => {
+    if (playingRef.current) {
+      stop();
+    } else {
+      start();
+    }
+  }, [start, stop]);
+
+  // バックグラウンドに回ったら止める（戻ったときに途中から鳴り出さないよう停止状態にする）
+  useEffect(() => {
+    const subscription = AppState.addEventListener('change', (nextState) => {
+      if ((nextState === 'background' || nextState === 'inactive') && playingRef.current) {
+        stop();
+      }
+    });
+    return () => subscription.remove();
+  }, [stop]);
+
+  const changeBpm = useCallback((val: number) => {
+    const v = Math.min(MAX_BPM, Math.max(MIN_BPM, Math.round(val)));
+    if (v === bpmRef.current) return;
+    bpmRef.current = v;
+    setBpmState(v);
+    if (playingRef.current) {
+      MetronomeModule.setBpm(v);
+    }
+  }, []);
+
+  const setClickEnabled = useCallback((enabled: boolean) => {
+    setClickEnabledState(enabled);
+    MetronomeModule.setClickEnabled(enabled);
+  }, []);
+
+  return {
+    bpm, playing, clickEnabled, start, stop, toggle, changeBpm, setClickEnabled,
+  };
+}

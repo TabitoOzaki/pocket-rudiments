@@ -1,0 +1,19 @@
+{
+  "name": "react-native-metronome",
+  "version": "1.0.0",
+  "description": "AVAudioEngine-based precise metronome native module",
+  "main": "src/index.ts",
+  "source": "src/index.ts",
+  "files": [
+    "src",
+    "ios",
+    "expo-module.config.json",
+    "react-native-metronome.podspec"
+  ],
+  "peerDependencies": {
+    "expo": "*",
+    "expo-modules-core": "*",
+    "react": "*",
+    "react-native": "*"
+  }
+}
