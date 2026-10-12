@@ -1,7 +1,7 @@
 import {
   Modal, SectionList, Text, TouchableOpacity, View, StyleSheet,
 } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
+import Ionicons from '@expo/vector-icons/Ionicons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import type { Rudiment, RudimentCategory } from '@/types/rudiment';
 import { CATEGORY_LABELS, RUDIMENTS } from '@/core/rudiments/catalog';

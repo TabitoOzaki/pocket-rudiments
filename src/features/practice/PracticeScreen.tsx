@@ -4,7 +4,9 @@ import {
 import {
   ScrollView, Text, TouchableOpacity, View, StyleSheet, useWindowDimensions,
 } from 'react-native';
-import { FontAwesome5, Ionicons } from '@expo/vector-icons';
+// まとめて import するとすべてのアイコンフォントが同梱されるので、セットごとに読み込む
+import FontAwesome5 from '@expo/vector-icons/FontAwesome5';
+import Ionicons from '@expo/vector-icons/Ionicons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import MetronomeModule from 'react-native-metronome';
 import type { Hand } from '@/types/rudiment';
