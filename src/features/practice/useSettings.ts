@@ -8,16 +8,17 @@ export interface PracticeSettings {
   rudimentId: number;
   bpm: number;
   lead: Hand;
-  clickEnabled: boolean;
-  snareEnabled: boolean;
+  /** クリックと見本演奏の音量（スライダーの値 0〜1） */
+  clickVolume: number;
+  snareVolume: number;
 }
 
 export const DEFAULT_SETTINGS: PracticeSettings = {
   rudimentId: 16,
   bpm: 80,
   lead: 'R',
-  clickEnabled: true,
-  snareEnabled: true,
+  clickVolume: 0.8,
+  snareVolume: 0.8,
 };
 
 /** 前回の練習状態を復元し、変更のたびに保存する */

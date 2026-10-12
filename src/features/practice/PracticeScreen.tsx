@@ -14,6 +14,7 @@ import { HAND_PAN, buildSnareLoop, loopBeatsOf } from '@/core/rudiments/schedule
 import RudimentStaff from '@/core/render/native/RudimentStaff';
 import { HAND_COLORS } from '@/core/render/native/shared';
 import BpmControl from '@/components/BpmControl';
+import VolumeControl from '@/components/VolumeControl';
 import MetronomeIcon from '@/components/icons/MetronomeIcon';
 import { MAX_BPM, MIN_BPM, useMetronome } from '@/features/metronome/useMetronome';
 import RudimentPicker from './RudimentPicker';
@@ -36,11 +37,22 @@ export default function PracticeScreen({ initialSettings, onSettingsChange }: Pr
   const { width } = useWindowDimensions();
   const [rudimentId, setRudimentId] = useState(initialSettings.rudimentId);
   const [lead, setLead] = useState<Hand>(initialSettings.lead);
-  const [snareEnabled, setSnareEnabled] = useState(initialSettings.snareEnabled);
   const [pickerVisible, setPickerVisible] = useState(false);
-  const metronome = useMetronome(initialSettings.bpm, initialSettings.clickEnabled);
+  const metronome = useMetronome(
+    initialSettings.bpm,
+    initialSettings.clickVolume,
+    initialSettings.snareVolume,
+  );
   const {
-    bpm, playing, clickEnabled, start, stop, changeBpm, setClickEnabled,
+    bpm,
+    playing,
+    clickVolume,
+    snareVolume,
+    start,
+    stop,
+    changeBpm,
+    setClickVolume,
+    setSnareVolume,
   } = metronome;
 
   const baseRudiment = RUDIMENTS.find((rudiment) => rudiment.id === rudimentId) ?? RUDIMENTS[0];
@@ -53,7 +65,7 @@ export default function PracticeScreen({ initialSettings, onSettingsChange }: Pr
 
   // 見本演奏のパターン（BPM で装飾音の間隔が変わるので BPM ごとに作り直す）
   useEffect(() => {
-    const hits = snareEnabled ? buildSnareLoop(rudiment, bpm) : [];
+    const hits = buildSnareLoop(rudiment, bpm);
     MetronomeModule.setSnareLoop(
       hits.map(({
         beat, sec, velocity, hand,
@@ -62,7 +74,7 @@ export default function PracticeScreen({ initialSettings, onSettingsChange }: Pr
       })),
       loopBeats,
     );
-  }, [rudiment, bpm, snareEnabled, loopBeats]);
+  }, [rudiment, bpm, loopBeats]);
 
   // ルーディメンツを変えたら拍子を合わせ、再生中ならカウントインからやり直す
   const playingRef = useRef(playing);
@@ -105,16 +117,6 @@ export default function PracticeScreen({ initialSettings, onSettingsChange }: Pr
   const changeLead = (hand: Hand) => {
     setLead(hand);
     onSettingsChange({ lead: hand });
-  };
-
-  const toggleSnare = () => {
-    setSnareEnabled(!snareEnabled);
-    onSettingsChange({ snareEnabled: !snareEnabled });
-  };
-
-  const toggleClick = () => {
-    setClickEnabled(!clickEnabled);
-    onSettingsChange({ clickEnabled: !clickEnabled });
   };
 
   const contentWidth = Math.min(width, 900) - SCREEN_PAD * 2 - insets.left - insets.right;
@@ -180,27 +182,32 @@ export default function PracticeScreen({ initialSettings, onSettingsChange }: Pr
           </View>
         </View>
 
+        <View style={styles.volumes}>
+          <VolumeControl
+            icon={<FontAwesome5 name="drum" size={20} color={snareVolume > 0 ? ACTIVE : INACTIVE} />}
+            label="Demo"
+            value={snareVolume}
+            onChange={setSnareVolume}
+            onChangeEnd={(volume) => onSettingsChange({ snareVolume: volume })}
+          />
+          <VolumeControl
+            icon={<MetronomeIcon color={clickVolume > 0 ? ACTIVE : INACTIVE} size={24} />}
+            label="Click"
+            value={clickVolume}
+            onChange={setClickVolume}
+            onChangeEnd={(volume) => onSettingsChange({ clickVolume: volume })}
+          />
+        </View>
+
         <View style={styles.transport}>
           <BpmControl bpm={bpm} min={MIN_BPM} max={MAX_BPM} onChangeBpm={changeBpm} />
-          <View style={styles.buttons}>
-            <TouchableOpacity style={styles.toggle} onPress={toggleClick}>
-              <MetronomeIcon color={clickEnabled ? ACTIVE : INACTIVE} size={30} />
-              <Text style={[styles.toggleText, clickEnabled && styles.toggleTextActive]}>
-                Click
-              </Text>
-            </TouchableOpacity>
-            <TouchableOpacity
-              style={[styles.playBtn, playing && styles.playBtnActive]}
-              onPress={handlePlay}
-              activeOpacity={0.8}
-            >
-              <Ionicons name={playing ? 'stop' : 'play'} size={36} color="#ffffff" />
-            </TouchableOpacity>
-            <TouchableOpacity style={styles.toggle} onPress={toggleSnare}>
-              <FontAwesome5 name="drum" size={26} color={snareEnabled ? ACTIVE : INACTIVE} />
-              <Text style={[styles.toggleText, snareEnabled && styles.toggleTextActive]}>Demo</Text>
-            </TouchableOpacity>
-          </View>
+          <TouchableOpacity
+            style={[styles.playBtn, playing && styles.playBtnActive]}
+            onPress={handlePlay}
+            activeOpacity={0.8}
+          >
+            <Ionicons name={playing ? 'stop' : 'play'} size={36} color="#ffffff" />
+          </TouchableOpacity>
         </View>
       </ScrollView>
 
@@ -305,27 +312,11 @@ const styles = StyleSheet.create({
     paddingTop: 18,
     alignItems: 'center',
   },
-  buttons: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-evenly',
-    width: '100%',
-    marginTop: 10,
-  },
-  toggle: {
-    width: 72,
-    alignItems: 'center',
-    gap: 4,
-  },
-  toggleText: {
-    color: INACTIVE,
-    fontSize: 12,
-    fontWeight: '600',
-  },
-  toggleTextActive: {
-    color: ACTIVE,
+  volumes: {
+    marginTop: 12,
   },
   playBtn: {
+    marginTop: 10,
     width: 76,
     height: 76,
     borderRadius: 38,

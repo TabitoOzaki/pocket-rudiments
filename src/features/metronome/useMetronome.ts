@@ -10,27 +10,39 @@ export const MAX_BPM = 300;
 /** Sight Pocket と同じ SF2 のキット番号（Jazz） */
 export const DRUM_KIT_PROGRAM = 32;
 
+/** スライダーの値（0〜1）を聴感に合うよう 2 乗してゲインにする */
+const toGain = (volume: number) => volume * volume;
+
 export interface UseMetronomeResult {
   bpm: number;
   playing: boolean;
-  clickEnabled: boolean;
+  /** スライダーの値（0〜1） */
+  clickVolume: number;
+  snareVolume: number;
   /** カウントイン（1 小節のクリック + 1 小節の発声）付きで頭から鳴らす */
   start: () => void;
   stop: () => void;
   toggle: () => void;
   changeBpm: (val: number) => void;
-  setClickEnabled: (enabled: boolean) => void;
+  setClickVolume: (volume: number) => void;
+  setSnareVolume: (volume: number) => void;
 }
 
-export function useMetronome(initialBpm: number, initialClickEnabled: boolean): UseMetronomeResult {
+export function useMetronome(
+  initialBpm: number,
+  initialClickVolume: number,
+  initialSnareVolume: number,
+): UseMetronomeResult {
   const [bpm, setBpmState] = useState(initialBpm);
   const [playing, setPlaying] = useState(false);
-  const [clickEnabled, setClickEnabledState] = useState(initialClickEnabled);
+  const [clickVolume, setClickVolumeState] = useState(initialClickVolume);
+  const [snareVolume, setSnareVolumeState] = useState(initialSnareVolume);
   const bpmRef = useRef(initialBpm);
   const playingRef = useRef(false);
 
   useEffect(() => {
-    MetronomeModule.setClickEnabled(initialClickEnabled);
+    MetronomeModule.setClickVolume(toGain(initialClickVolume));
+    MetronomeModule.setSnareVolume(toGain(initialSnareVolume));
     // 初期値だけを反映する
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
@@ -76,12 +88,26 @@ export function useMetronome(initialBpm: number, initialClickEnabled: boolean): 
     }
   }, []);
 
-  const setClickEnabled = useCallback((enabled: boolean) => {
-    setClickEnabledState(enabled);
-    MetronomeModule.setClickEnabled(enabled);
+  const setClickVolume = useCallback((volume: number) => {
+    setClickVolumeState(volume);
+    MetronomeModule.setClickVolume(toGain(volume));
+  }, []);
+
+  const setSnareVolume = useCallback((volume: number) => {
+    setSnareVolumeState(volume);
+    MetronomeModule.setSnareVolume(toGain(volume));
   }, []);
 
   return {
-    bpm, playing, clickEnabled, start, stop, toggle, changeBpm, setClickEnabled,
+    bpm,
+    playing,
+    clickVolume,
+    snareVolume,
+    start,
+    stop,
+    toggle,
+    changeBpm,
+    setClickVolume,
+    setSnareVolume,
   };
 }

@@ -19,7 +19,8 @@ interface MetronomeModuleInterface {
   preWarmSpeech(): void;
   loadDrumSoundFont(uri: string): void;
   setSnareLoop(notes: SnareHit[], loopBeats: number): void;
-  setClickEnabled(enabled: boolean): void;
+  setClickVolume(volume: number): void;
+  setSnareVolume(volume: number): void;
   setDrumKit(program: number): void;
   setBeatsPerMeasure(n: number): void;
   addListener(eventName: string, listener: () => void): { remove: () => void };
@@ -44,7 +45,10 @@ const MetronomeModule = {
   setSnareLoop(notes: SnareHit[], loopBeats: number) {
     getModule().setSnareLoop(notes, loopBeats);
   },
-  setClickEnabled(enabled: boolean) { getModule().setClickEnabled(enabled); },
+  /** クリックの音量（0〜1）。カウントイン中は 0 でも一定の音量で鳴る */
+  setClickVolume(volume: number) { getModule().setClickVolume(volume); },
+  /** 見本演奏のスネアの音量（0〜1） */
+  setSnareVolume(volume: number) { getModule().setSnareVolume(volume); },
   setDrumKit(program: number) { getModule().setDrumKit(program); },
   setBeatsPerMeasure(n: number) { getModule().setBeatsPerMeasure(n); },
   addBeatListener(listener: () => void) {

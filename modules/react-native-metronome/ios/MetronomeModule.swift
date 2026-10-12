@@ -12,7 +12,9 @@ public class MetronomeModule: Module {
   // pan は -1（左）〜 1（右）。負なら左手用、それ以外は右手用のサンプラーで鳴らす
   private var snareNotes: [(beat: Double, sec: Double, velocity: UInt8, pan: Float)] = []
   private var snareLoopBeats: Double = 0
-  private var clickEnabled = true
+  // 0〜1 の音量（ゲイン）。クリックはバッファの振幅、スネアはサンプラーの出力音量に掛ける
+  private var clickVolume: Float = 1
+  private var snareVolume: Float = 1
   private var timer: DispatchSourceTimer?
   private var bpm: Double = 120
   private var isPlaying = false
@@ -66,8 +68,14 @@ public class MetronomeModule: Module {
       }
       self?.snareLoopBeats = loopBeats.isFinite ? max(0, loopBeats) : 0
     }
-    Function("setClickEnabled") { [weak self] (enabled: Bool) in
-      self?.clickEnabled = enabled
+    Function("setClickVolume") { [weak self] (volume: Double) in
+      self?.clickVolume = Float(volume.isFinite ? min(max(volume, 0), 1) : 1)
+    }
+    Function("setSnareVolume") { [weak self] (volume: Double) in
+      guard let self = self else { return }
+      self.snareVolume = Float(volume.isFinite ? min(max(volume, 0), 1) : 1)
+      self.rightSampler.volume = self.snareVolume
+      self.leftSampler.volume = self.snareVolume
     }
     Function("setDrumKit") { [weak self] (program: Int) in
       self?.setDrumKit(program: program)
@@ -201,6 +209,8 @@ public class MetronomeModule: Module {
     audioEngine.connect(speechPlayerNode, to: audioEngine.mainMixerNode, format: speechFormat)
     audioEngine.connect(rightSampler, to: audioEngine.mainMixerNode, format: nil)
     audioEngine.connect(leftSampler, to: audioEngine.mainMixerNode, format: nil)
+    rightSampler.volume = snareVolume
+    leftSampler.volume = snareVolume
     try? audioEngine.start()
     playerNode.play()
     speechPlayerNode.play()
@@ -215,9 +225,11 @@ public class MetronomeModule: Module {
       sendEvent("onBeat")
       // カウントインも本編もbeatsPerMeasure拍ごとの1拍目（beatCounter ≡ 1 mod beatsPerMeasure）を常にアクセント
       let isDownbeat = (beatCounter - 1) % beatsPerMeasure == 0
-      // カウントイン中はクリックを切っていても鳴らす（入りの合図が無くなるため）
-      if clickEnabled || (countInActive && subdivCount <= countInSubdivs) {
-        playClickSound(accented: isDownbeat)
+      // カウントイン中はクリックの音量を絞っていても聞こえるようにする（入りの合図が無くなるため）
+      let inCountIn = countInActive && subdivCount <= countInSubdivs
+      let gain = inCountIn ? max(clickVolume, Self.countInMinVolume) : clickVolume
+      if gain > 0 {
+        playClickSound(accented: isDownbeat, gain: gain)
       }
       scheduleCountInSpeech()
     }
@@ -278,7 +290,9 @@ public class MetronomeModule: Module {
     }
   }
 
-  private func playClickSound(accented: Bool) {
+  private static let countInMinVolume: Float = 0.5
+
+  private func playClickSound(accented: Bool, gain: Float) {
     let sr = 44100.0; let dur = 0.02
     let freq = accented ? 1500.0 : 1000.0
     let fc = AVAudioFrameCount(sr * dur)
@@ -289,7 +303,7 @@ public class MetronomeModule: Module {
     let ch = buf.floatChannelData![0]
     for i in 0..<Int(fc) {
       let t = Double(i) / sr
-      ch[i] = Float(sin(2 * .pi * freq * t) * max(0, 1 - t / dur) * 0.8)
+      ch[i] = Float(sin(2 * .pi * freq * t) * max(0, 1 - t / dur) * 0.8) * gain
     }
     playerNode.scheduleBuffer(buf, completionHandler: nil)
   }
