@@ -4,12 +4,12 @@
     "slug": "pocket-rudiments",
     "version": "1.0.0",
     "orientation": "default",
-    "icon": "./assets/icon_v2.png",
+    "icon": "./assets/icon.png",
     "userInterfaceStyle": "dark",
     "splash": {
       "image": "./assets/splash.png",
       "resizeMode": "cover",
-      "backgroundColor": "#0266d6"
+      "backgroundColor": "#000000"
     },
     "assetBundlePatterns": [
       "**/*"
