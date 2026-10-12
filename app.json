@@ -35,6 +35,11 @@
       "expo-font",
       "expo-asset"
     ],
-    "owner": "tabitodev"
+    "owner": "tabitodev",
+    "extra": {
+      "eas": {
+        "projectId": "aedb99f9-2cdd-4d3e-81da-10e7ae18bde9"
+      }
+    }
   }
 }
